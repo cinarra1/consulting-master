@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<script type="text/javascript" src="d3.min.js"></script> 
+		<style type = "text/css">
+			
+		</style>
+	</head>
+	<body>
+		<p>Click here to add data </p>
+		<select onchange="setBrand(this)">
+			<option value="Dodge">Dodge</option>
+			<option value="Jeep">Jeep</option>
+			<option value="Chrysler">Chrysler</option>
+			<option value="Ram">Ram</option>
+		</select>
+		<script type="text/javascript">
+		
+		var brand;
+		var dataset = [];
+		
+		d3.csv("FCA_October.csv", function(error, data){
+			if (error){
+			console.log(error);
+			} else {
+			console.log(data);
+			dataset=data;
+			}
+		});
+		
+		function calculateEverythingEver(){
+			var w = 800;
+			var h = 250;
+		
+			var CYTDTotal = 0;
+			var PYTDTotal = 0;
+
+			var raceCYTDMap = new Map();
+			var brandToRaceToCYTD = new Map();
+			
+			
+			dataset.forEach(function (datum) {
+				if(!raceCYTDMap.get(datum.RACE)) {
+					raceCYTDMap.put(datum.RACE,0);
+				}
+			
+				raceCYTDMap.put(datum.RACE, raceCYTDMap.get(datum.RACE) + parseInt(datum.CYTD_SALES));
+			});
+			
+			
+			dataset.forEach(function(datum){
+				
+				if(!brandToRaceToCYTD.get(datum.BRAND)){
+					brandToRaceToCYTD.put(datum.BRAND, new Map());
+				}
+				
+				if(!brandToRaceToCYTD.get(datum.BRAND).get(datum.RACE)){
+					brandToRaceToCYTD.get(datum.BRAND).put(datum.RACE, (brandToRaceToCYTD.get(datum.BRAND).get(datum.RACE) + parseInt(datum.CYTD_SALES));
+					console.log(brandToRaceToCYTD);
+				}
+			
+			});
+			
+			
+			console.log("Brand["+brand+"] CYTD Total["+CYTDTotal+"] PYTD Total["+PYTDTotal+"]");
+			
+			//var Dodge_data = dataset.filter(function(d){return (d.BRAND == "Dodge")});
+			
+			//console.log(d3.max(Dodge_data, function(d) { return d.CYTD_SALES; }));
+			
+			var xScale = d3.scale.ordinal()
+				.domain(d3.range(dataset.length))
+				.rangeRoundBands([0,w], 0.05)
+		
+			var yScale = d3.scale.linear()
+				.domain([0, d3.max(dataset, function(d) { return d.CYTD_SALES; })])
+				.range([0,h]);
+			
+			var svg = d3.select("body")
+				.append("svg")
+				.attr("width", w)
+				.attr("height", h);
+			
+			svg.selectAll("rect")
+				.data(dataset)
+				.enter()
+				.append("rect")
+				.attr({
+					x: function(d, i) {
+						return xScale(i);
+				},
+					y: function(d) {
+						return h - (d.CYTD_SALES / 1000);
+				},
+					width: xScale.rangeBand(),
+					height: function(d) {
+						return yScale(d.CYTD_SALES) ;
+				},
+					fill: function(d) {
+					return "rgb(0, 0, " + Math.floor((d.CYTD_SALES /1000 + 10)) + ")";
+				}
+				});
+				
+			svg.selectAll("text")
+				.data(dataset)
+				.enter()
+				.append("text")
+				.text(function(d) {
+					return d.CYTD_SALES;
+				})
+				.attr("x", function(d,i){
+					return xScale(i) + xScale.rangeBand()/ 2;
+				})
+				.attr("y", function(d){
+					return h - (yScale(d.CYTD_SALES) / 1000) +15;
+				})
+				.attr("font-family", "sans-serif")
+				.attr("font-size", "11px")
+				.attr("fill", "white")
+				.attr("text-anchor", "middle");
+		}		
+			
+		function setBrand(element){
+			console.log(element);
+			brand = element.value;
+			calculateEverythingEver();
+		}
+		
+		</script>
+	</body>
+</html>
